@@ -1,0 +1,31 @@
+package com.processing.bank.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.*;
+import java.util.Collection;
+import java.util.Objects;
+
+@Entity()
+@Setter
+@Getter
+@Table (name = "accounts", schema = "bank")
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
+    private Client owner;
+
+    @Basic
+    @Column(name = "number", nullable = false, length = 50)
+    private String number;
+
+}
