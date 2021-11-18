@@ -1,15 +1,15 @@
 package com.processing.bank.rest;
 
+import com.processing.bank.dto.PayRequest;
 import com.processing.bank.model.Card;
-import com.processing.bank.model.Client;
+import com.processing.bank.model.Transaction;
 import com.processing.bank.repository.CardRepository;
-import com.processing.bank.repository.ClientRepository;
+import com.processing.bank.repository.TransactionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @Slf4j
 @RestController
@@ -18,8 +18,11 @@ public class CardResource {
 
     CardRepository cardRepository;
 
-    public CardResource(CardRepository cardRepository) {
+    TransactionRepository transactionRepository;
+
+    public CardResource(CardRepository cardRepository, TransactionRepository transactionRepository) {
         this.cardRepository = cardRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @GetMapping("/{id}")
@@ -51,6 +54,34 @@ public class CardResource {
             log.error("Exception: {}", exception.getStackTrace());
         }
         log.error("Get no card by number: {}", number);
+        return ResponseEntity.badRequest().body(new Card());
+    }
+
+    @PostMapping("/pay")
+    ResponseEntity<Card> getCardById(@RequestBody PayRequest request) {
+        try {
+            Card card = cardRepository.findCardByNumber(request.getCardNumber()).orElse(null);
+            Card receiverCard = cardRepository.findCardByNumber(request.getReceiverCardNumber()).orElse(null);
+            BigDecimal result = card.getAccount().getBalance().subtract(request.getAmount());
+            card.getAccount().setBalance(result);
+            cardRepository.save(card);
+            BigDecimal subtractResult = receiverCard.getAccount().getBalance().add(request.getAmount());
+            receiverCard.getAccount().setBalance(subtractResult);
+            cardRepository.save(receiverCard);
+            Transaction transaction = new Transaction();
+            transaction.setAmount(request.getAmount());
+            transaction.setSenderAccount(card.getAccount());
+            transaction.setReceiverAccount(receiverCard.getAccount());
+            transactionRepository.save(transaction);
+            if(card != null) {
+                log.info("Subtract an amount {} from the card: {}", request.getAmount(), request.getCardNumber());
+                return ResponseEntity.ok(card);
+            }
+        } catch (Exception exception) {
+            log.error("Exception: {}", exception.getMessage());
+            log.error("Exception: {}", exception.getStackTrace());
+        }
+        log.error("Can't subtract an amount {} from the card: {}", request.getAmount(), request.getCardNumber());
         return ResponseEntity.badRequest().body(new Card());
     }
 

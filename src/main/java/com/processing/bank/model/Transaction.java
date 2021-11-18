@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 @Entity()
@@ -13,13 +14,14 @@ import java.util.Objects;
 public class Transaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    //@GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
     @Basic
     @Column(name = "amount", nullable = true)
-    private Integer amount;
+    private BigDecimal amount;
 
     @Basic
     @Column(name = "type", nullable = true)
