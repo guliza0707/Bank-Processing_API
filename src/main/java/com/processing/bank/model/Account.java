@@ -29,9 +29,13 @@ public class Account {
     @JsonIgnore
     private Collection<Card> cards;
 
-    @OneToMany(mappedBy = "account", orphanRemoval = true)
+    @OneToMany(mappedBy = "senderAccount", orphanRemoval = true)
     @JsonIgnore
-    private Collection<Transaction> transactions;
+    private Collection<Transaction> senderTransactions;
+
+    @OneToMany(mappedBy = "receiverAccount", orphanRemoval = true)
+    @JsonIgnore
+    private Collection<Transaction> receiverTransactions;
 
     @Basic
     @Column(name = "number", nullable = false, length = 50)
@@ -41,8 +45,31 @@ public class Account {
     @Column(name = "balance")
     private BigDecimal balance;
 
+    /**
+     * Check that an account balance has enough amount money to transaction
+     * @param amount
+     * @return
+     */
     public boolean isEnoughBalanceAmount(BigDecimal amount) {
         return balance.compareTo(amount) > 0;
+    }
+
+    /**
+     * Subtract an amount of money from the account balance of sender
+     * @param amount
+     */
+    public void subtractFromBalance(BigDecimal amount) {
+        BigDecimal result = balance.subtract(amount);
+        balance = result;
+    }
+
+    /**
+     * Add an amount of money from the account balance of receiver
+     * @param amount
+     */
+    public void addToBalance(BigDecimal amount) {
+        BigDecimal result = balance.add(amount);
+        balance = result;
     }
 
 }

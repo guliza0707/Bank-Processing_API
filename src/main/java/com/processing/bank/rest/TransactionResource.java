@@ -30,54 +30,43 @@ public class TransactionResource {
     @PostMapping("/pay")
     ResponseEntity<Response<?>> getCardById(@RequestBody PayRequest request) {
         try {
-            // Get sender card
             Card card = cardRepository.findCardByNumber(request.getCardNumber()).orElse(null);
-
-            // Check returned card
             if(card != null) {
-                // Get receiver card
-                Card receiverCard = cardRepository.findCardByNumber(request.getReceiverCardNumber()).orElse(null);
-                // Check returned card
-                if(receiverCard != null) {
-                    // Subtract an amount of money from the account balance of sender
-                    BigDecimal result = card.getAccount().getBalance().subtract(request.getAmount());
-                    card.getAccount().setBalance(result);
-                    cardRepository.save(card);
-                    // Add an amount of money from the account balance of receiver
-                    BigDecimal addResult = receiverCard.getAccount().getBalance().add(request.getAmount());
-                    receiverCard.getAccount().setBalance(addResult);
-                    cardRepository.save(receiverCard);
-                    // Create an operation transaction
-                    //Transaction transaction = new Transaction(card.getAccount(), receiverCard.getAccount(), request.getAmount());
-                    transactionRepository.save(new Transaction(card.getAccount(), receiverCard.getAccount(), request.getAmount()));
+                log.info("Get card by number: {}", request.getCardNumber());
+                if(card.getAccount().isEnoughBalanceAmount(request.getAmount()))
+                {
+                    // Get receiver card
+                    Card receiverCard = cardRepository.findCardByNumber(request.getReceiverCardNumber()).orElse(null);
+                    // Check returned card
+                    if(receiverCard != null) {
+                        // Subtract an amount of money from the account balance of sender
+                        card.getAccount().subtractFromBalance(request.getAmount());
+                        cardRepository.save(card);
+                        // Add an amount of money from the account balance of receiver
+                        receiverCard.getAccount().addToBalance(request.getAmount());
+                        cardRepository.save(receiverCard);
+                        // Create an operation transaction
+                        //Transaction transaction = new Transaction(card.getAccount(), receiverCard.getAccount(), request.getAmount());
+                        transactionRepository.save(new Transaction(card.getAccount(), receiverCard.getAccount(), request.getAmount()));
 
-                    log.info("Subtract an amount {} from the card: {}", request.getAmount(), request.getCardNumber());
-                    return ResponseEntity.ok(new Response<>(2, "Something is wrong;)))",
-                            new Error(234,
-                                    String.format("Subtract an amount {} from the card: {}",
-                                            request.getAmount(),
-                                            request.getCardNumber()))));
+                        log.info("Subtract an amount {} from the card: {}", request.getAmount(), request.getCardNumber());
 
-                } else {
-                    log.info("Unable to get receiver card: {}", request.getReceiverCardNumber());
-                    return ResponseEntity.ok(new Response<>(2, "Something is wrong;)))",
-                            new Error(234,
-                                    String.format("Unable to get receiver card: {}",
-                                            request.getReceiverCardNumber()))));
+                        return ResponseEntity.ok(new Response(1002, String.format("Subtracted an amount {} from the card: {}",
+                                request.getAmount(),
+                                request.getCardNumber()), null));
+
+                    } else {
+                        log.info("Unable to get receiver card: {}", request.getReceiverCardNumber());
+                        return ResponseEntity.ok(new Response(2002, String.format("Something is wrong. Unable to get receiver card: {}",
+                                request.getReceiverCardNumber()), null));
+                    }
                 }
-            } else {
-                log.info("Unable to get sender card: {}", request.getCardNumber());
-                return ResponseEntity.ok(new Response<>(2, "Something is wrong;)))",
-                        new Error(234,
-                                String.format("Unable to get sender card: {}", request.getCardNumber()))));
+                return ResponseEntity.ok(new Response(2001, "Your Account Balance has not enough amount", null));
             }
-
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
             log.error("Exception: {}", exception.getMessage());
-            log.error("Exception: {}", exception.getStackTrace());
         }
-        log.error("Can't subtract an amount {} from the card: {}", request.getAmount(), request.getCardNumber());
-        return ResponseEntity.ok(new Response<>(235456, "", new Error(234, "")));
+        log.error("Get no card by number: {}", request.getCardNumber());
+        return ResponseEntity.badRequest().body(new Response(1001, String.format("Get no card by number: {}", request.getCardNumber()), null));
     }
 }

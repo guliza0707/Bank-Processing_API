@@ -11,6 +11,6 @@ import java.util.Optional;
 public interface CardRepository extends CrudRepository<Card, Long> {
     Optional<Card> findCardByNumber(String number);
 
-    @Query("SELECT c FROM cards c WHERE c.owner.fullName = ?1")
+    @Query("SELECT c FROM Card c WHERE c.owner.fullName = ?1")
     Optional<Card> findCardByOwnerFullName(String fullName);
 }
