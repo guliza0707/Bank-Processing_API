@@ -25,6 +25,14 @@ public class Account {
     @JsonIgnore
     private Client owner;
 
+    @OneToMany(mappedBy = "account", orphanRemoval = true)
+    @JsonIgnore
+    private Collection<Card> cards;
+
+    @OneToMany(mappedBy = "account", orphanRemoval = true)
+    @JsonIgnore
+    private Collection<Transaction> transactions;
+
     @Basic
     @Column(name = "number", nullable = false, length = 50)
     private String number;
@@ -32,5 +40,9 @@ public class Account {
     @Basic
     @Column(name = "balance")
     private BigDecimal balance;
+
+    public boolean isEnoughBalanceAmount(BigDecimal amount) {
+        return balance.compareTo(amount) > 0;
+    }
 
 }

@@ -1,6 +1,7 @@
 package com.processing.bank.rest;
 
 import com.processing.bank.dto.PayRequest;
+import com.processing.bank.dto.Response;
 import com.processing.bank.model.Card;
 import com.processing.bank.model.Transaction;
 import com.processing.bank.repository.CardRepository;
@@ -55,6 +56,26 @@ public class CardResource {
         }
         log.error("Get no card by number: {}", number);
         return ResponseEntity.badRequest().body(new Card());
+    }
+
+    @GetMapping("/is-enough-balance/{number}/{amount}")
+    ResponseEntity<Response> getCardById(@PathVariable("number") String number, @PathVariable("amount") BigDecimal amount) {
+        try {
+            Card card = cardRepository.findCardByNumber(number).orElse(null);
+            if(card != null) {
+                log.info("Get card by number: {}", number);
+                if(card.getAccount().isEnoughBalanceAmount(amount))
+                {
+                    return ResponseEntity.ok(new Response(1001, "Your Account Balance has enough amount", null));
+                }
+                return ResponseEntity.ok(new Response(2001, "Your Account Balance has not enough amount", null));
+            }
+        } catch (Exception exception) {
+            log.error("Exception: {}", exception.getMessage());
+            log.error("Exception: {}", exception.getStackTrace());
+        }
+        log.error("Get no card by number: {}", number);
+        return ResponseEntity.badRequest().body(new Response(1001, String.format("Get no card by number: {}", number), null));
     }
 
     @PostMapping("/pay")

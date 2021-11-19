@@ -35,4 +35,12 @@ public class Transaction {
     @JoinColumn(name = "receiver_account_id", referencedColumnName = "id")
     private Account receiverAccount;
 
+    public Transaction() {
+    }
+
+    public Transaction(Account senderAccount, Account receiverAccount, BigDecimal amount) {
+        this.amount = amount;
+        this.senderAccount = senderAccount;
+        this.receiverAccount = receiverAccount;
+    }
 }

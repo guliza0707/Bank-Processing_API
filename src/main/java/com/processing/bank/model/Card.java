@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.sql.Date;
 import java.util.Objects;
 
-@Entity(name = "cards")
+@Entity
 @Setter
 @Getter
 @Table (name = "cards", schema = "bank")
